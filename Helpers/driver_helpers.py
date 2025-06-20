@@ -10,7 +10,16 @@ from typing import Union
 import locators
 
 
-def get_locator_type(locator):
+def get_locator_type(locator: str) -> str:
+    """
+    Determines the Selenium locator type based on the locator string.
+
+    Args:
+        locator (str): The locator string to analyze.
+
+    Returns:
+        str: The Selenium By strategy (e.g., By.CSS_SELECTOR, By.XPATH, By.ID).
+    """
     for name, val in vars(locators).items():
         if val is locator:
             locator_mapping = {"css": By.CSS_SELECTOR, "xpath": By.XPATH, "id": By.ID}
@@ -18,8 +27,19 @@ def get_locator_type(locator):
             return locator_type
 
 
-def get_element_attribute_value(driver, locator=None, element=None, attribute_name=None):
-    # attribute_value = element.get_attribute(attribute_name) if element else wait_till_element_is_present(driver, locator).get_attribute(attribute_name)
+def get_element_attribute_value(driver: WebDriver, locator: str = None, element: WebElement = None, attribute_name: str = None) -> str:
+    """
+    Retrieves the value of the specified attribute from a web element.
+
+    Args:
+        driver (WebDriver): The Selenium WebDriver instance.
+        locator (str, optional): The locator string to find the element. Either locator or element must be provided.
+        element (WebElement, optional): The web element to get the attribute from.
+        attribute_name (str, optional): The name of the attribute to retrieve.
+
+    Returns:
+        str: The value of the attribute, or None if the element or attribute is not found.
+    """
     if element:
         attribute_value = element.get_attribute(attribute_name)
     elif locator:
@@ -54,12 +74,37 @@ def wait_till_element_is_present(driver: WebDriver, locator: str, timeout: int =
         print(f"ERROR: timeout error, locator '{locator}' not found")
         return False
 
-def get_all_elements(driver, locator):
+def get_all_elements(driver: WebDriver, locator: str) -> list[WebElement]:
+    """
+    Finds all elements matching the given locator.
+
+    Args:
+        driver (WebDriver): The Selenium WebDriver instance.
+        locator (str): The locator string to find elements.
+
+    Returns:
+        list[WebElement]: A list of WebElements matching the locator, or an empty list if none are found.
+    """
     all_elements = driver.find_elements(get_locator_type(locator), locator)
     return all_elements
 
 
-def wait_till_element_is_clickable(driver, locator=None, element=None, timeout=30):
+def wait_till_element_is_clickable(driver: WebDriver, locator: str = None, element: WebElement = None, timeout: int = 30) -> WebElement:
+    """
+    Waits until the element is clickable within the specified timeout.
+
+    Args:
+        driver (WebDriver): The Selenium WebDriver instance.
+        locator (str, optional): The locator string to find the element. Either locator or element must be provided.
+        element (WebElement, optional): The web element to wait for.
+        timeout (int, optional): Maximum time to wait in seconds. Default is 30.
+
+    Returns:
+        WebElement: The clickable WebElement.
+
+    Raises:
+        TimeoutException: If the element is not clickable within the timeout.
+    """
     if locator:
         element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable((get_locator_type(locator), locator)))
         print(f"{locator} is clickable")
@@ -69,9 +114,25 @@ def wait_till_element_is_clickable(driver, locator=None, element=None, timeout=3
     return element
 
 
-def click_element(driver, locator=None, element=None, timeout=30): # try to click, if fail check popup, if popup present, close popup then retry
+def click_element(driver: WebDriver, locator: str = None, element: WebElement = None, timeout: int = 30) -> None:
+    """
+    Clicks on the specified element, handling potential popup interceptions.
+
+    Args:
+        driver (WebDriver): The Selenium WebDriver instance.
+        locator (str, optional): The locator string to find the element. Either locator or element must be provided.
+        element (WebElement, optional): The web element to click.
+        timeout (int, optional): Maximum time to wait in seconds. Default is 30.
+
+    Returns:
+        None
+
+    Note:
+        If the initial click fails due to an intercepted exception, it will attempt to close any popup and retry the click.
+    """
     try:
         element.click() if element else wait_till_element_is_clickable(driver, locator=locator, timeout=timeout).click()
+        print("Element clicked successfully")
     except (ElementClickInterceptedException, ElementNotInteractableException):
         print("ElementClickInterceptedException occurred, checking for popup...")
         popup = wait_till_element_is_clickable(driver, locator=locators.campaign_pop_up_xpath, timeout=5)
