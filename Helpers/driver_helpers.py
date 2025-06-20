@@ -18,6 +18,18 @@ def get_locator_type(locator):
             return locator_type
 
 
+def get_element_attribute_value(driver, locator=None, element=None, attribute_name=None):
+    # attribute_value = element.get_attribute(attribute_name) if element else wait_till_element_is_present(driver, locator).get_attribute(attribute_name)
+    if element:
+        attribute_value = element.get_attribute(attribute_name)
+    elif locator:
+        attribute_value = wait_till_element_is_present(driver, locator).get_attribute(attribute_name)
+    else:
+        print("ERROR: element or locator not found")
+        attribute_value = None
+    return attribute_value
+
+
 def wait_till_element_is_present(driver: WebDriver, locator: str, timeout: int = 30) -> Union[WebElement, bool]:
     """
     Waits until the element is present in the DOM (not necessarily visible) within the specified timeout.
