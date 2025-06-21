@@ -36,7 +36,6 @@ class Homepage(BasePage):
         famous_destinations = self.get_famous_destinations_elements()
         for destination in famous_destinations:
             driver_helpers.click_element(self.driver, element=destination, timeout=10)
-            time.sleep(3)
             img_elements = driver_helpers.get_all_elements(self.driver, locators.famous_destinations_image_under_each_title_xpath)
             print(f"Images found: {len(img_elements)}")
             for img_element in img_elements:

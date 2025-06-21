@@ -27,25 +27,33 @@ def get_locator_type(locator: str) -> str:
             return locator_type
 
 
-def get_element_attribute_value(driver: WebDriver, locator: str = None, element: WebElement = None, attribute_name: str = None) -> str:
+def get_element_attribute_value(driver: WebDriver, locator: str = None, element: WebElement = None, attribute_name: str = None, timeout: int = 10) -> str:
     """
-    Retrieves the value of the specified attribute from a web element.
+    Retrieves the value of the specified attribute from a web element, waiting until it is not None or empty.
 
     Args:
         driver (WebDriver): The Selenium WebDriver instance.
         locator (str, optional): The locator string to find the element. Either locator or element must be provided.
         element (WebElement, optional): The web element to get the attribute from.
         attribute_name (str, optional): The name of the attribute to retrieve.
+        timeout (int, optional): Maximum time to wait for the attribute to be non-empty. Defaults to 10 seconds.
 
     Returns:
-        str: The value of the attribute, or None if the element or attribute is not found.
+        str: The value of the attribute, or None if the element or attribute is not found within the timeout.
     """
-    if element:
-        attribute_value = element.get_attribute(attribute_name)
-    elif locator:
-        attribute_value = wait_till_element_is_present(driver, locator).get_attribute(attribute_name)
-    else:
-        print("ERROR: element or locator not found")
+    attribute_value = None
+    try:
+        if element:
+            WebDriverWait(driver, timeout).until(lambda d: element.get_attribute(attribute_name))
+            attribute_value = element.get_attribute(attribute_name)
+        elif locator:
+            web_elem = wait_till_element_is_present(driver, locator)
+            WebDriverWait(driver, timeout).until(lambda d: web_elem.get_attribute(attribute_name))
+            attribute_value = web_elem.get_attribute(attribute_name)
+        else:
+            print("ERROR: element or locator not found")
+    except TimeoutException:
+        print(f"Timeout: Attribute '{attribute_name}' did not become available/non-empty within {timeout} seconds.")
         attribute_value = None
     return attribute_value
 
@@ -85,6 +93,7 @@ def get_all_elements(driver: WebDriver, locator: str) -> list[WebElement]:
     Returns:
         list[WebElement]: A list of WebElements matching the locator, or an empty list if none are found.
     """
+    wait_till_element_is_present(driver, locator, timeout=3)
     all_elements = driver.find_elements(get_locator_type(locator), locator)
     return all_elements
 
