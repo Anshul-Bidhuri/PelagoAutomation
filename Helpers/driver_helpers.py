@@ -6,6 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common import TimeoutException, ElementClickInterceptedException, WebDriverException, ElementNotInteractableException
 from selenium.webdriver.common.action_chains import ActionChains
 from typing import Union
+from selenium import webdriver
+
 
 import locators
 
@@ -157,3 +159,33 @@ def click_element(driver: WebDriver, locator: str = None, element: WebElement = 
             print("Popup not found or not clickable.")
     except WebDriverException as e:
         print(f"WebDriverException occurred during click: {e}")
+
+
+def initialize_chrome_driver(headless=False) -> WebDriver:
+    options = webdriver.ChromeOptions()
+    options.add_argument("--start-maximized")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--ignore-certificate-errors")
+    if headless:
+        options.add_argument("--headless")
+    driver = webdriver.Chrome(options=options)
+    return driver
+
+
+def initialize_safari_driver(headless=False) -> WebDriver:
+    options = webdriver.SafariOptions()
+    driver = webdriver.Safari(options=options)
+    driver.maximize_window()
+    if headless:
+        options.add_argument("--headless")
+    return driver
+
+
+def initialize_firefox_driver(headless=False) -> WebDriver:
+    options = webdriver.FirefoxOptions()
+    if headless:
+        options.add_argument('--headless')
+    options.set_preference('dom.webnotifications.enabled', False)  # Disable notifications
+    driver = webdriver.Firefox(options=options)
+    driver.maximize_window()  # Maximize the browser window
+    return driver
