@@ -1,6 +1,7 @@
 import pytest
 from Pages.homepage import Homepage
 from Helpers import assertion_methods
+from Data import constant
 
 
 class TestFamousDestinationSection:
@@ -8,7 +9,7 @@ class TestFamousDestinationSection:
     @pytest.fixture(scope="class", autouse=True)
     def initiate_driver(self, request, initiate_browser_webdriver):
         request.cls.driver = initiate_browser_webdriver
-        request.cls.driver.get("https://www.pelago.com/en/")
+        request.cls.driver.get(constant.HOME_PAGE_URL.get(request.cls.server))
         request.cls.home_page_obj = Homepage(request.cls.driver)
 
     def test_famous_destination_links_status_code(self):
