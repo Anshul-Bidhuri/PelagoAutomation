@@ -7,9 +7,11 @@ from selenium.common import TimeoutException, ElementClickInterceptedException, 
 from selenium.webdriver.common.action_chains import ActionChains
 from typing import Union
 from selenium import webdriver
-
+from Helpers import custom_logger
 
 import locators
+
+log = custom_logger.get_logger()
 
 
 def get_locator_type(locator: str) -> str:
@@ -53,9 +55,9 @@ def get_element_attribute_value(driver: WebDriver, locator: str = None, element:
             WebDriverWait(driver, timeout).until(lambda d: web_elem.get_attribute(attribute_name))
             attribute_value = web_elem.get_attribute(attribute_name)
         else:
-            print("ERROR: element or locator not found")
+            log.error("ERROR: element or locator not found")
     except TimeoutException:
-        print(f"Timeout: Attribute '{attribute_name}' did not become available/non-empty within {timeout} seconds.")
+        log.error(f"Timeout: Attribute '{attribute_name}' did not become available/non-empty within {timeout} seconds.")
         attribute_value = None
     return attribute_value
 
@@ -78,10 +80,10 @@ def wait_till_element_is_present(driver: WebDriver, locator: str, timeout: int =
     """
     try:
         element = WebDriverWait(driver, timeout).until(EC.presence_of_element_located((get_locator_type(locator), locator)))
-        print(f"{locator} is present")
+        log.info(f"{locator} is present")
         return element
     except TimeoutException as e:
-        print(f"ERROR: timeout error, locator '{locator}' not found")
+        log.error(f"timeout error, locator '{locator}' not found")
         return False
 
 def get_all_elements(driver: WebDriver, locator: str) -> list[WebElement]:
@@ -118,10 +120,10 @@ def wait_till_element_is_clickable(driver: WebDriver, locator: str = None, eleme
     """
     if locator:
         element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable((get_locator_type(locator), locator)))
-        print(f"{locator} is clickable")
+        log.info(f"{locator} is clickable")
     elif element:
         WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(element))
-        print("element clickable")
+        log.info("element clickable")
     return element
 
 
@@ -143,22 +145,22 @@ def click_element(driver: WebDriver, locator: str = None, element: WebElement = 
     """
     try:
         element.click() if element else wait_till_element_is_clickable(driver, locator=locator, timeout=timeout).click()
-        print("Element clicked successfully")
+        log.info("Element clicked successfully")
     except (ElementClickInterceptedException, ElementNotInteractableException):
-        print("ElementClickInterceptedException occurred, checking for popup...")
+        log.warning("ElementClickInterceptedException occurred, checking for popup...")
         popup = wait_till_element_is_clickable(driver, locator=locators.campaign_pop_up_xpath, timeout=5)
         if popup:
             popup.click()
-            print("Popup closed. Retrying element click.")
+            log.info("Popup closed. Retrying element click.")
             try:
                 wait_till_element_is_clickable(driver, locator, element, timeout)
                 ActionChains(driver).move_to_element(element).click().perform()
             except Exception as retry_exception:
-                print(f"Retry failed: {retry_exception}")
+                log.error(f"Retry failed: {retry_exception}")
         else:
-            print("Popup not found or not clickable.")
+            log.error("Popup not found or not clickable.")
     except WebDriverException as e:
-        print(f"WebDriverException occurred during click: {e}")
+        log.error(f"WebDriverException occurred during click: {e}")
 
 
 def initialize_chrome_driver(headless=False) -> WebDriver:
@@ -166,6 +168,7 @@ def initialize_chrome_driver(headless=False) -> WebDriver:
     options.add_argument("--start-maximized")
     options.add_argument("--disable-notifications")
     options.add_argument("--ignore-certificate-errors")
+    options.page_load_strategy = 'eager'  # 'normal', 'eager', or 'none'
     if headless:
         options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
